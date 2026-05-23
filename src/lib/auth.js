@@ -152,12 +152,21 @@ export function onAuthChange(callback) {
  * Must call initRecaptcha() first (renders invisible recaptcha).
  */
 export async function sendPhoneOTP(phoneNumber) {
+  if (!phoneNumber) throw new Error('Phone number is required');
   try {
     // Firebase requires strict E.164 format (e.g. +26771234567) without spaces or hyphens.
     // Strip everything except the leading '+' and digits.
     const hasPlus = phoneNumber.trim().startsWith('+');
     let cleanNumber = phoneNumber.replace(/\D/g, '');
+    
+    // Fix legacy Botswana numbers that accidentally have a 0 after 267
+    if (cleanNumber.startsWith('2670')) {
+      cleanNumber = '267' + cleanNumber.substring(4);
+    }
+    
     if (hasPlus) cleanNumber = '+' + cleanNumber;
+    
+    console.log("Attempting to send OTP to:", cleanNumber);
 
     const verifier = initRecaptcha();
     _phoneConfirmResult = await signInWithPhoneNumber(firebaseAuth, cleanNumber, verifier);
