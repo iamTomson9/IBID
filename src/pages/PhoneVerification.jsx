@@ -74,6 +74,10 @@ export default function PhoneVerification() {
 
   // ── Send OTP ───────────────────────────────────────────────
   async function doSendOTP(phoneNumber) {
+    if (!phoneNumber) {
+      setError('No phone number found. Please go back and re-enter your number.');
+      return;
+    }
     setSending(true);
     setError('');
     try {
@@ -83,22 +87,10 @@ export default function PhoneVerification() {
       setCanResend(false);
       setSuccessMsg(`Code sent to ${maskPhone(phoneNumber)}`);
       setTimeout(() => setSuccessMsg(''), 4000);
-      // Focus first box
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (err) {
-      const msg = err.message || '';
-      // Provide actionable error messages
-      if (msg.includes('billing') || msg.includes('BILLING') || msg.includes('quota')) {
-        setError('SMS service requires Firebase Blaze plan. Use email verification instead.');
-      } else if (msg.includes('invalid-phone') || msg.includes('INVALID_PHONE')) {
-        setError(`Phone number format invalid. Please update your number in profile.`);
-      } else if (msg.includes('too-many-requests') || msg.includes('TOO_MANY_REQUESTS')) {
-        setError('Too many OTP requests. Please wait a few minutes then try again.');
-      } else if (msg.includes('captcha') || msg.includes('reCAPTCHA')) {
-        setError('reCAPTCHA error. Please refresh the page and try again.');
-      } else {
-        setError(msg || 'Failed to send OTP. Try email verification instead.');
-      }
+      // auth.js now returns friendly, specific error messages
+      setError(err.message || 'Failed to send OTP. Try email verification instead.');
     } finally {
       setSending(false);
     }

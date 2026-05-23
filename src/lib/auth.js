@@ -31,22 +31,29 @@ import { sanitizeText, validateEmail, validatePassword, validateName } from './v
 let _recaptchaVerifier = null;
 let _phoneConfirmResult = null; // stored for OTP confirm step
 
+/**
+ * Always destroys any existing reCAPTCHA and creates a fresh one.
+ * This is the ONLY reliable way to avoid stale-verifier errors.
+ */
 export function initRecaptcha(containerId = 'recaptcha-container') {
-  // Always re-create if the container is missing or verifier is stale
+  // 1. Destroy old verifier cleanly
   if (_recaptchaVerifier) {
-    try {
-      _recaptchaVerifier.render(); // throws if already rendered
-    } catch (_) {
-      // Already rendered — reuse it
-    }
-    return _recaptchaVerifier;
+    try { _recaptchaVerifier.clear(); } catch (_) {}
+    _recaptchaVerifier = null;
   }
 
-  const container = document.getElementById(containerId);
-  if (!container) {
-    throw new Error('recaptcha-container not found in DOM.');
+  // 2. Wipe and re-insert a fresh container div so Firebase has a clean mount point
+  const existing = document.getElementById(containerId);
+  if (existing) {
+    existing.innerHTML = '';
+  } else {
+    const div = document.createElement('div');
+    div.id = containerId;
+    div.style.display = 'none';
+    document.body.appendChild(div);
   }
 
+  // 3. Create a new invisible reCAPTCHA verifier
   _recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
     size: 'invisible',
     callback: () => {},
@@ -152,28 +159,49 @@ export function onAuthChange(callback) {
  * Must call initRecaptcha() first (renders invisible recaptcha).
  */
 export async function sendPhoneOTP(phoneNumber) {
-  if (!phoneNumber) throw new Error('Phone number is required');
-  try {
-    // Firebase requires strict E.164 format (e.g. +26771234567) without spaces or hyphens.
-    // Strip everything except the leading '+' and digits.
-    const hasPlus = phoneNumber.trim().startsWith('+');
-    let cleanNumber = phoneNumber.replace(/\D/g, '');
-    
-    // Fix legacy Botswana numbers that accidentally have a 0 after 267
-    if (cleanNumber.startsWith('2670')) {
-      cleanNumber = '267' + cleanNumber.substring(4);
-    }
-    
-    if (hasPlus) cleanNumber = '+' + cleanNumber;
-    
-    console.log("Attempting to send OTP to:", cleanNumber);
+  if (!phoneNumber) throw new Error('Phone number is required. Please update your profile.');
+  
+  // ── Normalize to strict E.164 ────────────────────────────────
+  const hasPlus = phoneNumber.trim().startsWith('+');
+  let digits = phoneNumber.replace(/\D/g, '');
 
+  // Fix Botswana numbers that accidentally have a 0 after country code (2670XXXXXXX → 267XXXXXXX)
+  if (digits.startsWith('2670')) {
+    digits = '267' + digits.substring(4);
+  }
+
+  const cleanNumber = (hasPlus ? '+' : '+') + digits; // always prepend '+'
+
+  // Botswana numbers: +267 followed by 7-8 digits (total 10-11 digits with CC)
+  if (digits.length < 10 || digits.length > 13) {
+    throw new Error(
+      `Invalid phone number (${cleanNumber}). Please use your full Botswana number starting with 71, 72, 73, 74, 75, 76, or 77.`
+    );
+  }
+
+  console.log('[OTP] Sending to:', cleanNumber);
+
+  try {
+    // Always create a fresh verifier — stale verifiers cause silent failures
     const verifier = initRecaptcha();
     _phoneConfirmResult = await signInWithPhoneNumber(firebaseAuth, cleanNumber, verifier);
     return true;
   } catch (err) {
-    _recaptchaVerifier = null; // reset on error so it can be recreated
-    throw err;
+    // Clear everything so next attempt gets a clean slate
+    _recaptchaVerifier = null;
+    _phoneConfirmResult = null;
+    console.error('[OTP] Error:', err.code, err.message);
+    
+    // Translate Firebase error codes to friendly messages
+    if (err.code === 'auth/invalid-phone-number') {
+      throw new Error(`Invalid number format (${cleanNumber}). Use format: 71234567 (without country code).`);
+    } else if (err.code === 'auth/too-many-requests') {
+      throw new Error('Too many OTP requests. Please wait a few minutes and try again.');
+    } else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/missing-client-identifier') {
+      throw new Error('Security check failed. Please refresh the page and try again.');
+    } else {
+      throw err;
+    }
   }
 }
 
