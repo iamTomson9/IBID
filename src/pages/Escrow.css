@@ -1,0 +1,29 @@
+.escrow-header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: var(--max-width); height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-base); background: rgba(13,13,26,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: var(--z-sticky); }
+.escrow-back { color: var(--text-primary); padding: var(--space-xs); }
+.escrow-info-card { display: flex; gap: var(--space-md); padding: var(--space-base); background: rgba(74,0,224,0.1); border: 1px solid rgba(74,0,224,0.2); border-radius: var(--radius-md); margin: var(--space-base) 0; }
+.escrow-info-icon { color: var(--primary-light); flex-shrink: 0; margin-top: 2px; }
+.escrow-info-card p { color: var(--text-secondary); }
+.escrow-list { display: flex; flex-direction: column; gap: var(--space-lg); }
+.escrow-card { background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; }
+.escrow-card__header { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--space-base); }
+.escrow-card__title { font-family: var(--font-heading); font-size: var(--fs-base); font-weight: 600; color: var(--text-primary); }
+.escrow-card__party { color: var(--text-secondary); margin-top: 2px; }
+.escrow-card__status { font-size: var(--fs-xs); padding: 4px 10px; border-radius: var(--radius-full); font-weight: 600; white-space: nowrap; }
+.escrow-card__status--awaiting_confirmation { background: var(--warning-soft); color: var(--warning); }
+.escrow-card__status--completed { background: var(--success-soft); color: var(--success); }
+.escrow-timeline { padding: 0 var(--space-base) var(--space-base); }
+.escrow-step { display: flex; align-items: flex-start; gap: var(--space-md); position: relative; padding-bottom: var(--space-md); }
+.escrow-step:last-child { padding-bottom: 0; }
+.escrow-step__dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); flex-shrink: 0; z-index: 1; }
+.escrow-step.done .escrow-step__dot { color: var(--success); }
+.escrow-step__line { position: absolute; left: 11px; top: 24px; bottom: 0; width: 2px; background: var(--surface-light); }
+.escrow-step.done .escrow-step__line { background: var(--success); }
+.escrow-step__info { display: flex; flex-direction: column; padding-top: 2px; }
+.escrow-step__label { font-size: var(--fs-sm); color: var(--text-secondary); }
+.escrow-step.done .escrow-step__label { color: var(--text-primary); }
+.escrow-step__date { margin-top: 1px; }
+.escrow-card__footer { padding: var(--space-base); border-top: 1px solid var(--surface-border); }
+.escrow-card__amounts { display: flex; flex-direction: column; gap: var(--space-xs); }
+.escrow-card__amount-row { display: flex; justify-content: space-between; font-size: var(--fs-sm); }
+.escrow-confirm-btn { width: 100%; margin-top: var(--space-base); padding: var(--space-md); background: var(--success); color: var(--text-inverse); border-radius: var(--radius-md); font-weight: 600; font-size: var(--fs-base); transition: opacity var(--transition-fast); }
+.escrow-confirm-btn:active { opacity: 0.8; }

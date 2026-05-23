@@ -1,0 +1,102 @@
+/* ============================================
+   Settings Page Styles
+   ============================================ */
+
+.settings-page {
+  padding-bottom: 100px;
+  min-height: 100vh;
+}
+
+.settings-page .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-md);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-md);
+}
+
+.settings-page .back-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.settings-page .back-btn:hover {
+  background: var(--surface);
+}
+
+/* Section */
+.settings-section {
+  margin-bottom: 8px;
+}
+
+/* Rows */
+.settings-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.settings-row:hover {
+  background: var(--surface-light);
+}
+
+.settings-row:active {
+  background: var(--surface-light);
+  transform: scale(0.98);
+}
+
+/* Payout list */
+.payout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Toggle switch style for checkboxes */
+.settings-page input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.settings-page input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.settings-page input[type="checkbox"]:checked {
+  background: var(--primary);
+}
+
+.settings-page input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}

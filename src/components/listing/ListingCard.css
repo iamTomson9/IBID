@@ -1,0 +1,33 @@
+.listing-card { background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; transition: transform var(--transition-fast), box-shadow var(--transition-fast); }
+.listing-card:active { transform: scale(0.97); }
+.listing-card:hover { box-shadow: var(--shadow-md); }
+
+/* Horizontal variant (for scroll rows) */
+.listing-card--horizontal { min-width: 180px; max-width: 180px; flex-shrink: 0; scroll-snap-align: start; }
+.listing-card--horizontal .listing-card__image { height: 130px; }
+.listing-card--horizontal .listing-card__body { padding: var(--space-md); }
+.listing-card--horizontal .listing-card__title { font-size: var(--fs-xs); -webkit-line-clamp: 2; }
+.listing-card--horizontal .listing-card__bid { font-size: var(--fs-sm); }
+.listing-card--horizontal .listing-card__meta { font-size: 10px; }
+
+/* Vertical variant (full width list) */
+.listing-card--vertical { display: flex; flex-direction: row; }
+.listing-card--vertical .listing-card__image { width: 120px; min-height: 110px; flex-shrink: 0; }
+.listing-card--vertical .listing-card__body { padding: var(--space-md); flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* Compact variant (grid) */
+.listing-card--compact { }
+.listing-card--compact .listing-card__image { height: 110px; }
+.listing-card--compact .listing-card__body { padding: var(--space-sm) var(--space-md); }
+.listing-card--compact .listing-card__title { font-size: var(--fs-xs); -webkit-line-clamp: 1; }
+.listing-card--compact .listing-card__bid { font-size: var(--fs-sm); }
+
+/* Shared */
+.listing-card__image { display: flex; align-items: center; justify-content: center; position: relative; }
+.listing-card__emoji { font-size: 2.5rem; opacity: 0.8; }
+.listing-card--vertical .listing-card__emoji { font-size: 2rem; }
+.listing-card__condition { position: absolute; top: var(--space-sm); left: var(--space-sm); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-full); }
+.listing-card__title { font-size: var(--fs-sm); font-weight: 600; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+.listing-card__bid { font-family: var(--font-mono); font-size: var(--fs-base); font-weight: 700; color: var(--success); margin-top: var(--space-xs); }
+.listing-card__meta { display: flex; gap: var(--space-md); align-items: center; margin-top: var(--space-xs); font-size: var(--fs-xs); color: var(--text-tertiary); }
+.listing-card__bids, .listing-card__time { display: flex; align-items: center; gap: 3px; }

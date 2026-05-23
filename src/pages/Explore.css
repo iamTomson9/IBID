@@ -1,0 +1,33 @@
+.explore-page { background: var(--bg); padding: var(--space-base); padding-bottom: calc(var(--bottom-nav-height) + var(--space-xl)); }
+
+/* Search */
+.explore-search-bar { display: flex; align-items: center; gap: var(--space-sm); background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-sm) var(--space-base); margin-bottom: var(--space-base); border: 1px solid var(--surface-border); }
+.explore-search-icon { color: var(--text-tertiary); flex-shrink: 0; }
+.explore-search-input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: var(--fs-base); outline: none; min-height: 40px; }
+.explore-search-input::placeholder { color: var(--text-tertiary); }
+.explore-clear-search { color: var(--text-tertiary); padding: var(--space-xs); }
+
+/* Category Pills */
+.explore-cat-pills { display: flex; gap: var(--space-sm); margin-bottom: var(--space-base); overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px; }
+.explore-cat-pills::-webkit-scrollbar { display: none; }
+.explore-cat-pill { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); background: var(--surface); border-radius: var(--radius-full); font-size: var(--fs-xs); color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; transition: all var(--transition-fast); border: 1.5px solid transparent; font-weight: 500; }
+.explore-cat-pill:active { background: var(--surface-light); }
+.explore-cat-pill.active { background: var(--primary-gradient); color: white; border-color: transparent; }
+
+/* Gender filter */
+.explore-gender-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-base); }
+.explore-gender-pill { padding: var(--space-xs) var(--space-base); border-radius: var(--radius-full); font-size: var(--fs-xs); font-weight: 500; color: var(--text-tertiary); background: none; border: 1px solid var(--surface-border); transition: all var(--transition-fast); }
+.explore-gender-pill.active { color: var(--text-primary); background: var(--surface-light); border-color: var(--primary-light); }
+
+/* Filter tag */
+.explore-filter-tag { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-base); padding: var(--space-sm) var(--space-base); background: rgba(74,0,224,0.08); border: 1px solid rgba(74,0,224,0.15); border-radius: var(--radius-full); font-size: var(--fs-xs); color: var(--primary-light); font-weight: 500; }
+.explore-filter-tag button { color: var(--text-tertiary); padding: 2px; }
+
+/* Results count */
+.explore-results-count { margin-bottom: var(--space-md); }
+
+/* Grid */
+.explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+
+/* Empty */
+.explore-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 30vh; color: var(--text-tertiary); gap: var(--space-md); text-align: center; }
