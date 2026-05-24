@@ -128,7 +128,7 @@ export function validateBidAmount(amount, minBid, symbol = '') {
 export function validatePrice(price) {
   const n = Number(price);
   if (!price || !isFinite(n)) return { ok: false, error: 'Starting price is required.' };
-  if (n < 1) return { ok: false, error: 'Price must be at least 1.' };
+  if (n < 0.10) return { ok: false, error: 'Price must be at least 0.10.' };
   if (n > 100_000_000) return { ok: false, error: 'Price exceeds the maximum allowed.' };
   return { ok: true };
 }

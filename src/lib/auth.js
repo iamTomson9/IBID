@@ -33,37 +33,46 @@ let _phoneConfirmResult = null; // stored for OTP confirm step
 
 /**
  * Always destroys any existing reCAPTCHA and creates a fresh one.
- * This is the ONLY reliable way to avoid stale-verifier errors.
+ * Uses 'normal' size so it works on local IPs / non-allowlisted domains.
  */
-export function initRecaptcha(containerId = 'recaptcha-container') {
+export function initRecaptcha(containerId = 'recaptcha-container', onSolved) {
   // 1. Destroy old verifier cleanly
   if (_recaptchaVerifier) {
     try { _recaptchaVerifier.clear(); } catch (_) {}
     _recaptchaVerifier = null;
   }
 
-  // 2. Wipe and re-insert a fresh container div so Firebase has a clean mount point
+  // 2. Wipe container so Firebase gets a clean mount point
   const existing = document.getElementById(containerId);
   if (existing) {
     existing.innerHTML = '';
+    existing.style.display = 'block'; // make visible for normal size
   } else {
     const div = document.createElement('div');
     div.id = containerId;
-    div.style.display = 'none';
     document.body.appendChild(div);
   }
 
-  // 3. Create a new invisible reCAPTCHA verifier
+  // 3. Create verifier — normal size works on any domain/IP
   _recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
-    size: 'invisible',
-    callback: () => {},
+    size: 'normal',
+    callback: () => {
+      // reCAPTCHA solved — hide the widget again
+      const el = document.getElementById(containerId);
+      if (el) el.style.display = 'none';
+      if (typeof onSolved === 'function') onSolved();
+    },
     'expired-callback': () => {
       _recaptchaVerifier = null;
       _phoneConfirmResult = null;
     },
   });
+
+  // Pre-render the widget so it appears immediately when needed
+  _recaptchaVerifier.render().catch(() => {});
   return _recaptchaVerifier;
 }
+
 
 // ── Firebase → Supabase JWT Bridge ───────────────────────────
 
@@ -170,40 +179,39 @@ export async function sendPhoneOTP(phoneNumber) {
     digits = '267' + digits.substring(4);
   }
 
-  const cleanNumber = (hasPlus ? '+' : '+') + digits; // always prepend '+'
+  const cleanNumber = '+' + digits; // always prepend '+'
 
   // Botswana numbers: +267 followed by 7-8 digits (total 10-11 digits with CC)
   if (digits.length < 10 || digits.length > 13) {
     throw new Error(
-      `Invalid phone number (${cleanNumber}). Please use your full Botswana number starting with 71, 72, 73, 74, 75, 76, or 77.`
+      `Invalid phone number (${cleanNumber}). Please use your full Botswana number e.g. 71234567.`
     );
   }
 
   console.log('[OTP] Sending to:', cleanNumber);
 
   try {
-    // Always create a fresh verifier — stale verifiers cause silent failures
+    // Create a fresh verifier — normal size works on any domain/IP
     const verifier = initRecaptcha();
     _phoneConfirmResult = await signInWithPhoneNumber(firebaseAuth, cleanNumber, verifier);
     return true;
   } catch (err) {
-    // Clear everything so next attempt gets a clean slate
     _recaptchaVerifier = null;
     _phoneConfirmResult = null;
     console.error('[OTP] Error:', err.code, err.message);
     
-    // Translate Firebase error codes to friendly messages
     if (err.code === 'auth/invalid-phone-number') {
-      throw new Error(`Invalid number format (${cleanNumber}). Use format: 71234567 (without country code).`);
+      throw new Error(`Invalid number format (${cleanNumber}). Enter digits only e.g. 71234567.`);
     } else if (err.code === 'auth/too-many-requests') {
       throw new Error('Too many OTP requests. Please wait a few minutes and try again.');
     } else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/missing-client-identifier') {
-      throw new Error('Security check failed. Please refresh the page and try again.');
+      throw new Error('Security check failed. Please complete the reCAPTCHA checkbox to continue.');
     } else {
-      throw err;
+      throw new Error(err.message || 'Failed to send OTP. Please try again.');
     }
   }
 }
+
 
 /**
  * Confirm the OTP code the user typed.

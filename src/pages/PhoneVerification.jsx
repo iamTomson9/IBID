@@ -212,8 +212,21 @@ export default function PhoneVerification() {
 
   return (
     <div className="verify-page">
-      {/* Firebase Phone Auth needs this in the DOM */}
-      <div id="recaptcha-container" style={{ display: 'none' }} />
+      {/* reCAPTCHA widget — shown automatically by Firebase when OTP is triggered */}
+      <div
+        id="recaptcha-container"
+        style={{
+          display: 'none',
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 9999,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      />
 
       {/* Header — minimal, no back button to guest mode (this is a hard gate) */}
       <header className="verify-header">

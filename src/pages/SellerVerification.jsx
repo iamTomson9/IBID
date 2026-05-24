@@ -21,7 +21,7 @@ export default function SellerVerification() {
       setProcessing(false);
       setDone(true);
       dispatch({ type: 'VERIFY_SELLER' });
-      setTimeout(() => navigate('/create-listing'), 2000);
+      setTimeout(() => navigate('/create-listing'), 4000);
     }, 2500);
   };
 
@@ -99,8 +99,9 @@ export default function SellerVerification() {
                   <motion.div className="sv-success-circle" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 12 }}>
                     <Check size={40} strokeWidth={3} />
                   </motion.div>
-                  <h2 className="heading-2">You're Verified! ✅</h2>
-                  <p className="body" style={{ color: 'var(--text-secondary)' }}>You can now list products on iBID.</p>
+                  <h2 className="heading-2" style={{ textAlign: 'center' }}>Verification Submitted! ✅</h2>
+                  <p className="body" style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>It will take 1-3 days for your account to be verified.</p>
+                  <p className="body-sm" style={{ color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 12 }}>You can proceed to list products while you wait.</p>
                 </>
               )}
             </motion.div>

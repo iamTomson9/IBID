@@ -25,7 +25,7 @@ function getCatIcon(catId, size = 20) {
 
 export default function CreateListing() {
   const navigate = useNavigate();
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState([]);
   const [title, setTitle] = useState('');
@@ -44,22 +44,7 @@ export default function CreateListing() {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Gate: must be verified
-  if (!state.isVerified) {
-    return (
-      <motion.div className="cl-page page" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="cl-gate">
-          <div className="cl-gate__icon"><Shield size={56} strokeWidth={1.5} /></div>
-          <h2 className="heading-2">Become a Verified Seller</h2>
-          <p className="body" style={{ color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 280 }}>
-            To list products on iBID, you need to verify your identity with a selfie and ID document.
-          </p>
-          <button className="cl-gate__btn" onClick={() => navigate('/verify')}>Get Verified</button>
-          <button className="cl-gate__back" onClick={() => navigate('/home')}>Back to Home</button>
-        </div>
-      </motion.div>
-    );
-  }
+  // Users can now list even if unverified. They will just see a prompt.
 
   // Real photo picker — opens device camera/gallery
   const handleAddPhoto = () => fileInputRef.current?.click();
@@ -100,9 +85,9 @@ export default function CreateListing() {
   const updateChecklist = (i, field, val) => { const c = [...checklist]; c[i][field] = val; setChecklist(c); };
 
   const canNext = () => {
-    if (step === 1) return title && category;
-    if (step === 2) return checklist.some(c => c.item);
-    if (step === 3) return price && currency && duration;
+    if (step === 1) return title && category && photos.length >= 4 && photos.length <= 8;
+    if (step === 2) return checklist.filter(c => c.item.trim()).length >= 3;
+    if (step === 3) return price && parseFloat(price) >= 0.10 && currency && duration;
     return agreed;
   };
 
@@ -135,8 +120,8 @@ export default function CreateListing() {
         condition_id: condition,
         gender_tag: gender,
         currency,
-        starting_bid: parseInt(price),
-        current_bid: parseInt(price),
+        starting_bid: parseFloat(price),
+        current_bid: parseFloat(price),
         total_bids: 0,
         watchers: 0,
         delivery_type: delivery,
@@ -218,13 +203,25 @@ export default function CreateListing() {
             <motion.div key="s1" initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }}>
               <h3 className="heading-4 cl-section-title">Photos & Details</h3>
 
+              {!state.isVerified && (
+                <div style={{ background: '#1a1a2e', border: '1px solid var(--primary)', borderRadius: 12, padding: 16, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <Shield size={24} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: 16, fontWeight: 600 }}>Verify your account</h4>
+                      <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.4 }}>Verified listers get more bids than unverified listers.</p>
+                    </div>
+                  </div>
+                  <button onClick={() => navigate('/verify-seller')} style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: 8, fontWeight: 600, alignSelf: 'flex-start', border: 'none' }}>Verify Now</button>
+                </div>
+              )}
+
               {/* Hidden file input — triggers device camera/gallery */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
-                capture="environment"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
@@ -245,7 +242,7 @@ export default function CreateListing() {
                   </button>
                 )}
               </div>
-              <p className="caption" style={{ marginBottom: 'var(--space-lg)' }}>{photos.length}/8 photos · tap to add from camera or gallery</p>
+              <p className="caption" style={{ marginBottom: 'var(--space-lg)' }}>{photos.length}/8 photos (min 4 required) · tap to add</p>
 
               <div className="form-group"><label className="form-label">Title</label><input type="text" className="form-input" placeholder="What are you listing?" value={title} onChange={e => setTitle(e.target.value)} /></div>
               <div className="form-group"><label className="form-label">Description</label><textarea className="form-input cl-textarea" placeholder="Describe your product..." value={description} onChange={e => setDescription(e.target.value)} /></div>
@@ -286,7 +283,7 @@ export default function CreateListing() {
             <motion.div key="s2" initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }}>
               <h3 className="heading-4 cl-section-title">Condition Checklist</h3>
               <p className="body-sm" style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-                Define condition items buyers will verify on receipt. Be honest — discrepancies incur penalties.
+                Define at least 3 condition items buyers will verify on receipt. Be honest — discrepancies incur penalties.
               </p>
 
               {/* Category-based suggestions */}
@@ -378,8 +375,8 @@ export default function CreateListing() {
               <div className="form-group">
                 <label className="form-label">Starting Bid Price</label>
                 <div className="cl-price-input">
-                  <span className="cl-price-symbol mono">{currSym}</span>
-                  <input type="number" className="form-input cl-price-field mono" placeholder="0" value={price} onChange={e => setPrice(e.target.value)} />
+                  <span className="cl-price-sym">{currSym}</span>
+                  <input type="number" step="0.01" min="0.10" className="form-input cl-price-field mono" placeholder="0.10" value={price} onChange={e => setPrice(e.target.value)} />
                 </div>
               </div>
 
@@ -420,7 +417,7 @@ export default function CreateListing() {
                   <span style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>{getCatIcon(category, 48)}</span>
                 </div>
                 <h4 className="heading-4" style={{ margin: 'var(--space-md) 0 var(--space-xs)' }}>{title || 'Your Listing'}</h4>
-                <p className="mono" style={{ color: 'var(--success)', fontSize: 'var(--fs-lg)', fontWeight: 700 }}>Starting at {currSym}{parseInt(price || 0).toLocaleString()}</p>
+                <p className="mono" style={{ color: 'var(--success)', fontSize: 'var(--fs-lg)', fontWeight: 700 }}>Starting at {currSym}{parseFloat(price || 0).toLocaleString()}</p>
                 <p className="caption" style={{ marginTop: 'var(--space-xs)' }}>{duration} days · {delivery === 'both' ? 'Pickup & Shipping' : delivery} · {CONDITIONS.find(c=>c.id===condition)?.label}</p>
               </div>
 
