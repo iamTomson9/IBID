@@ -215,7 +215,11 @@ export default function ListingDetail() {
               try {
                 // In a real app we'd also delete from Supabase here:
                 const { supabase } = await import('../lib/supabase');
-                await supabase.from('listings').delete().eq('id', listing.id);
+                const { error } = await supabase.from('listings').delete().eq('id', listing.id);
+                if (error) {
+                  alert('Error deleting from database: ' + error.message);
+                  return;
+                }
                 dispatch({ type: 'DELETE_LISTING', payload: listing.id });
                 navigate('/home', { replace: true });
               } catch (err) {
