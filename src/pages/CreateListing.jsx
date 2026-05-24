@@ -33,7 +33,11 @@ export default function CreateListing() {
   const [category, setCategory] = useState('');
   const [gender, setGender] = useState('unisex');
   const [condition, setCondition] = useState('');
-  const [checklist, setChecklist] = useState([{ item: '', rating: '', notes: '' }, { item: '', rating: '', notes: '' }]);
+  const [checklist, setChecklist] = useState([
+    { item: '', rating: 'Excellent', notes: '' },
+    { item: '', rating: 'Excellent', notes: '' },
+    { item: '', rating: 'Excellent', notes: '' }
+  ]);
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState('BWP');
   const [duration, setDuration] = useState(7);
@@ -52,31 +56,43 @@ export default function CreateListing() {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+    
+    // Filter to images only and within max limit
+    const validFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
     const remaining = 8 - photos.length;
-    const toUpload = files.slice(0, remaining);
-    setUploadingPhotos(true);
-    try {
-      const uploaded = await Promise.all(toUpload.map(async (file) => {
-        // Validate file type (images only)
-        if (!file.type.startsWith('image/')) return null;
-        // Validate file size (max 10MB per image)
-        if (file.size > 10 * 1024 * 1024) return null;
+    const toUpload = validFiles.slice(0, remaining);
+    if (!toUpload.length) return;
+    
+    // Immediately show previews so the UI updates instantly
+    const newPhotos = toUpload.map(file => ({
+      id: Date.now() + Math.random(),
+      file,
+      preview: URL.createObjectURL(file),
+      url: null // will be updated once uploaded
+    }));
+    
+    setPhotos(prev => [...prev, ...newPhotos]);
+    e.target.value = ''; // Reset input
 
+    // Upload in background
+    setUploadingPhotos(true);
+    for (let i = 0; i < toUpload.length; i++) {
+      const file = toUpload[i];
+      const photoObj = newPhotos[i];
+      try {
         const uid = state.currentUser?.id || 'anon';
         const path = `listings/${uid}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
         const storageRef = ref(firebaseStorage, path);
         const snapshot = await uploadBytes(storageRef, file);
         const url = await getDownloadURL(snapshot.ref);
-        return { id: Date.now() + Math.random(), url, preview: URL.createObjectURL(file) };
-      }));
-      setPhotos(prev => [...prev, ...uploaded.filter(Boolean)]);
-    } catch (err) {
-      console.error('Photo upload error:', err);
-      // Fallback to local preview if storage fails
-    } finally {
-      setUploadingPhotos(false);
-      e.target.value = '';
+        
+        // Update the photo object with the real URL
+        setPhotos(prev => prev.map(p => p.id === photoObj.id ? { ...p, url } : p));
+      } catch (err) {
+        console.error('Photo upload error for', file.name, err);
+      }
     }
+    setUploadingPhotos(false);
   };
 
   const removePhoto = (id) => setPhotos(photos.filter(p => p.id !== id));
@@ -86,7 +102,7 @@ export default function CreateListing() {
 
   const canNext = () => {
     if (step === 1) return title && category && photos.length >= 4 && photos.length <= 8;
-    if (step === 2) return checklist.filter(c => c.item.trim()).length >= 3;
+    if (step === 2) return checklist.filter(c => (c.item || '').trim()).length >= 3;
     if (step === 3) return price && parseFloat(price) >= 0.10 && currency && duration;
     return agreed;
   };
