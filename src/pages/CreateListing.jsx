@@ -90,6 +90,9 @@ export default function CreateListing() {
         setPhotos(prev => prev.map(p => p.id === photoObj.id ? { ...p, url } : p));
       } catch (err) {
         console.error('Photo upload error for', file.name, err);
+        alert(`Failed to upload ${file.name}. This is usually caused by Firebase Storage security rules being locked. Please set your Firebase Storage rules to allow read/write for testing. Error: ${err.message}`);
+        // Remove the failed photo from state so they don't get stuck
+        setPhotos(prev => prev.filter(p => p.id !== photoObj.id));
       }
     }
     setUploadingPhotos(false);
@@ -113,6 +116,17 @@ export default function CreateListing() {
     // Rate limiting
     if (!rateLimitCheck('publish_listing', 5000)) {
       setPublishError('Please wait before publishing again.');
+      return;
+    }
+
+    // Block if images are still uploading or failed
+    if (uploadingPhotos) {
+      setPublishError('Please wait for photos to finish uploading.');
+      return;
+    }
+    const uploadedUrls = photos.map(p => p.url).filter(Boolean);
+    if (uploadedUrls.length < 4) {
+      setPublishError('You need at least 4 successfully uploaded photos. Please check your Firebase Storage rules if uploads are failing.');
       return;
     }
 
@@ -145,8 +159,8 @@ export default function CreateListing() {
         location_country: state.currentUser.country || '',
         ends_at: endsAt.toISOString(),
         status: 'active',
-        images: photos.map(p => p.url).filter(Boolean), // real Firebase Storage URLs
-        condition_checklist: checklist.filter(c => c.item),
+        images: uploadedUrls, // real Firebase Storage URLs
+        condition_checklist: checklist.filter(c => (c.item || '').trim()),
       }]).select().single();
 
       if (error) throw error;
@@ -466,8 +480,8 @@ export default function CreateListing() {
           {step < 4 ? (
             <button className={`cl-nav-next ${canNext() ? '' : 'disabled'}`} disabled={!canNext()} onClick={() => setStep(step + 1)}>Next</button>
           ) : (
-            <button className={`cl-nav-publish ${agreed && !publishing ? '' : 'disabled'}`} disabled={!agreed || publishing} onClick={handlePublish}>
-              <Rocket size={16} /> {publishing ? 'Publishing...' : 'Publish Listing'}
+            <button className={`cl-nav-publish ${agreed && !publishing && !uploadingPhotos ? '' : 'disabled'}`} disabled={!agreed || publishing || uploadingPhotos} onClick={handlePublish}>
+              <Rocket size={16} /> {publishing ? 'Publishing...' : uploadingPhotos ? 'Uploading Photos...' : 'Publish Listing'}
             </button>
           )}
         </div>
