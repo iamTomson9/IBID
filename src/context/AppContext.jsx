@@ -37,6 +37,9 @@ function appReducer(state, action) {
     case 'ADD_LISTING':
       return { ...state, listings: [action.payload, ...state.listings] };
 
+    case 'DELETE_LISTING':
+      return { ...state, listings: state.listings.filter(l => l.id !== action.payload) };
+
     case 'SET_TRANSACTIONS':
       return { ...state, transactions: action.payload };
 

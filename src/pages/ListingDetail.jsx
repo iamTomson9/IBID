@@ -41,12 +41,18 @@ export default function ListingDetail() {
 
   if (!listing) return <div className="page container" style={{ paddingTop: 80, textAlign: 'center', color: 'var(--text-secondary)' }}>Listing not found</div>;
 
-  const seller = getUserById(listing.sellerId);
+  const isSeller = state.currentUser?.id === listing.sellerId;
+  const seller = isSeller 
+    ? state.currentUser 
+    : (getUserById(listing.sellerId) || state.users?.find(u => u.id === listing.sellerId) || { name: 'Unknown Seller', badge: 'bronze', isVerifiedSeller: false });
+
   const condition = CONDITIONS.find(c => c.id === listing.condition);
   const isUrgent = timeLeft.days === 0 && timeLeft.hours < 2;
   const highestBidder = listing.bids[0] ? getUserById(listing.bids[0].userId) : null;
   const color = CAT_COLORS[listing.category] || '#4A00E0';
-  const isSeller = state.currentUser?.id === listing.sellerId;
+  
+  const locCity = listing.location?.city || 'Gaborone';
+  const locCountry = listing.location?.country || 'BW';
 
   const handleBid = () => {
     if (!state.isAuthenticated) { navigate('/register'); return; }
@@ -89,6 +95,17 @@ export default function ListingDetail() {
         </div>
       </div>
 
+      {/* Thumbnail Previews */}
+      {images.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, padding: '16px 24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          {images.map((img, i) => (
+            <div key={i} onClick={() => { setCurrentImageIdx(i); setShowGallery(true); }} style={{ width: 64, height: 64, flexShrink: 0, borderRadius: 12, overflow: 'hidden', border: i === currentImageIdx ? `2px solid ${color}` : '2px solid transparent', cursor: 'pointer' }}>
+              <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Full Screen Gallery Modal */}
       {showGallery && (
         <div className="ld-gallery-modal" onClick={() => setShowGallery(false)}>
@@ -121,10 +138,10 @@ export default function ListingDetail() {
         {/* Seller & Stats */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
           <div className="ld-seller" onClick={() => navigate(`/profile/${listing.sellerId}`)} style={{ margin: 0 }}>
-            <div className="ld-seller__avatar">{seller?.name?.charAt(0)}</div>
+            <div className="ld-seller__avatar">{seller?.name?.charAt(0) || '?'}</div>
             <div>
-              <span className="ld-seller__name">{seller?.name} {seller?.isVerifiedSeller && <BadgeCheck size={14} color="var(--success)" />}</span>
-              <span className="ld-seller__badge">{getBadgeInfo(seller?.badge).label}</span>
+              <span className="ld-seller__name">{seller?.name || 'Seller'} {seller?.isVerifiedSeller && <BadgeCheck size={14} color="var(--success)" />}</span>
+              <span className="ld-seller__badge">{getBadgeInfo(seller?.badge || 'bronze').label}</span>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', fontSize: 'var(--fs-xs)', color: 'var(--text-secondary)' }}>
@@ -135,7 +152,7 @@ export default function ListingDetail() {
 
         {/* Location, Delivery & Timer */}
         <div className="ld-tags">
-          <span className="ld-tag"><MapPin size={13} /> {listing.location.city}, {listing.location.country}</span>
+          <span className="ld-tag"><MapPin size={13} /> {locCity}, {locCountry}</span>
           <span className="ld-tag"><Truck size={13} /> {listing.delivery === 'both' ? 'Pickup & Shipping' : listing.delivery === 'pickup' ? 'Pickup Only' : 'Shipping Only'}</span>
           <span className={`ld-tag ${isUrgent ? 'ld-compact-timer urgent' : 'ld-compact-timer'}`} style={{ marginRight: '15px' }}>
             <Clock size={12} />
@@ -189,6 +206,24 @@ export default function ListingDetail() {
         ) : (
           <button className="ld-bid-btn animate-heartbeat" onClick={handleBid} id="bid-button">
           BID <Flame size={18} />
+          </button>
+        )}
+        
+        {isSeller && (
+          <button onClick={async () => {
+            if (window.confirm('Are you sure you want to delete this listing?')) {
+              try {
+                // In a real app we'd also delete from Supabase here:
+                const { supabase } = await import('../lib/supabase');
+                await supabase.from('listings').delete().eq('id', listing.id);
+                dispatch({ type: 'DELETE_LISTING', payload: listing.id });
+                navigate('/home', { replace: true });
+              } catch (err) {
+                console.error(err);
+              }
+            }
+          }} style={{ background: 'var(--surface-border)', color: 'var(--error)', padding: '16px', borderRadius: 12, fontWeight: 600, width: '100%', marginTop: 12, border: 'none' }}>
+            Delete Listing
           </button>
         )}
 
